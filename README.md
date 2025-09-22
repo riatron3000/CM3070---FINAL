@@ -6,7 +6,7 @@ This is the code for my final project Django REST API, a music recommendation sy
 
 ## Data Folder
 
-The `data/` folder contains large files required for running NextTrack (models, embeddings, datasets).  
+The `data/` folder contains large files required for running the app (models, embeddings, datasets).  
 These files are **not included in the GitHub repository** due to their size.
 
 You can download all required files from Google Drive:  

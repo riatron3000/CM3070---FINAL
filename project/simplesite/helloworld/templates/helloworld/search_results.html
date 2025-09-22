@@ -1,0 +1,364 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Music recommender site">
+    <meta name="keywords" content="HTML,music,recommendations">
+    <meta name="author" content="M.Khalif">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Doto:wght,ROND@100..900,0..100&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cutive+Mono&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/8d8a85ab1c.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/helloworld.css' %}?v={{ timestamp }}">
+  </head>
+  <body>
+
+    <div class="title-section">
+        <h1>ALGORHYTHM</h1>
+    </div>
+
+    <div class="s-results-container">
+        <form class="search-results-form">
+            {% csrf_token %}
+
+            <div id="sub-error"></div>
+            <div class="radio">
+                <h2>Filter popularity</h2>
+                <input type="radio" id="known" name="track_popularity" value="known">
+                <label for="known">Known</label><br>
+                <input type="radio" id="obscure" name="track_popularity" value="obscure">
+                <label for="obscure">Obscure</label><br>
+                <input type="radio" id="deepcuts" name="track_popularity" value="deepcuts">
+                <label for="deepcuts">Deep Cuts</label><br><br>
+            </div>
+
+            <h2>Filter style</h2>
+            <div class="subgenre-filter">
+                <select name="subgenre">
+                    <option value="">-- Select Genre --</option>
+                    <option value="ambient">Ambient</option>
+                    <option value="shoegaze">Shoegaze</option>
+                    <option value="triphop">Trip hop</option>
+                    <option value="slowcore">Slowcore</option>
+                </select>
+            </div>
+
+            <div class="checkbox">
+                <h2>Select Tracks</h2>
+                {% for track in search_result %}
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="track{{ forloop.counter }}" name="track_id" value="{{ track.track_id }}">
+                        <label for="track{{ forloop.counter }}" class="result-track-label">
+                            {{ track.title }} by {{ track.artist }}
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="submit" class="get-recc-button">Get Recommendations</button>
+        </form>
+        <div class="s-results-guide">
+          <h2>Fetching for: '{{ query }}'</h2>
+          <div class="steps-for-reccs">
+            <div class="step">
+              <h3>1. Select Tracks:</h3>
+              <p>Choose up to 3 tracks that resonate with your current mood or vibe.</p>
+            </div>
+            <div class="step">
+              <h3>2. Filter Options:</h3>
+              <p>Use the popularity and genre filters to refine your recommendations.</p>
+            </div>
+            <div class="step">
+              <h3>3. Get Recommendations:</h3>
+              <p>Click the "Get Recommendations" button and wait for the magic to happen!</p>
+            </div>
+          </div>
+          <p class="guide-tip">💡 Tip: You can mix known tracks with obscure picks to discover something fresh without straying too far from your taste.</p>
+        </div>
+    </div>
+
+    <div class="recs-display" id="recs-display" style="display: none;">
+      <div class="container">
+        <div class="vinyl-cover scrollable" id="api-results-container">
+          <!-- JS  inject  -->
+        </div>
+        <div class="vinyl-cd">
+          <img src="{% static 'assets/vinylcute.png' %}" style="width: 100%;"> 
+        </div>
+      </div>
+      <div class="typewriter">
+        <h2 id="now-playing-header">Now Playing:</h2>
+        <div class="np-text-box">
+          <p id="now-playing-text"></p>
+        </div>
+        
+          <!-- <p id="now-playing-text"></p> -->
+      </div>
+    </div>
+
+    <div class="tracklisting" id="tracklist-section" style="display:none;">
+      <div class="tlist-heading">
+        <h2>Tracklist</h2>
+        <i class="fa-regular fa-music">
+          <p class="tracklist-length" id="tracklist-length"></p>
+        </i>
+      </div>
+      <div class="vinyl-tracks">
+        <table class="rec-table">
+          <thead>
+            <tr>
+              <th>#</th> 
+              <th>Track</th>
+              <th>Artist</th>
+              <th>Match</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody id="tracklist-body">
+            <!-- JS inject -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const form = document.querySelector(".search-results-form");
+          const resultsContainer = document.getElementById("api-results-container");
+          const nowPlayingText = document.getElementById("now-playing-text");
+          const tracklistSection = document.getElementById("tracklist-section");
+          const tracklistBody = document.getElementById("tracklist-body");
+          const tracklistLength = document.getElementById("tracklist-length");
+          const recsDisplay = document.getElementById("recs-display");
+          const searchResultsContainer = document.querySelector(".s-results-container");
+          const errorDiv = document.getElementById("sub-error");
+          // loader + messages
+          const loadingOverlay = document.getElementById("loading-overlay");
+          const loadingMessage = document.getElementById("loading-message");
+          const progressFill = document.querySelector(".progress-fill");
+          const messages = [
+            "Tuning the vinyl...",
+            "Mixing some beats...",
+            "Digging up deep cuts...",
+            "Almost there..."
+          ];
+
+          function showLoader() {
+            loadingOverlay.style.display = "flex";
+            let progress = 0;
+            let msgIndex = 0;
+            // reset
+            progressFill.style.width = "0%";
+            loadingMessage.textContent = messages[0];
+            // animate progress/change messages
+            const interval = setInterval(() => {
+              progress = Math.min(progress + 2, 100);
+              progressFill.style.width = progress + "%";
+              if (progress % 20 === 0 && msgIndex < messages.length - 1) {
+                msgIndex++;
+                loadingMessage.textContent = messages[msgIndex];
+              }
+            }, 1200);
+            return interval; // so we can stop it later
+          }
+
+          function hideLoader(interval) {
+            clearInterval(interval);
+            loadingOverlay.style.display = "none";
+          }
+
+          //https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_typewriter 
+          let typingTimeout;
+          let typingIndex = 0;
+          let fullText = '';
+          const speed = 85;
+          let dots = "..........";
+
+          function typeWriter() {
+            if (typingIndex < fullText.length) {
+              nowPlayingText.textContent += fullText.charAt(typingIndex);
+              typingIndex++;
+              typingTimeout = setTimeout(typeWriter, speed);
+            }
+          }
+          function startTypewriter(text) {
+            clearTimeout(typingTimeout);
+            fullText = text;
+            typingIndex = 0;
+            nowPlayingText.textContent = '';
+            typeWriter();
+          }
+
+          // submit handler
+          form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            // loader
+            const interval = showLoader();
+
+            const checked = [...form.querySelectorAll("input[name='track_id']:checked")];
+            const trackIds = checked.map(c => c.value);
+
+            if (trackIds.length === 0) {
+              errorDiv.textContent = "* Please select at least one track.";
+              hideLoader(interval);
+              return;
+            }
+            if (trackIds.length > 3) {
+              errorDiv.textContent = "* You can select up to 3 tracks only.";
+              hideLoader(interval);
+              return;
+            }
+
+            const popularity = form.querySelector("input[name='track_popularity']:checked")?.value;
+            const subgenre = form.querySelector("select[name='subgenre']").value;
+
+            const params = new URLSearchParams();
+            trackIds.forEach(id => params.append("track_ids", id));
+            if (popularity) params.append("track_popularity", popularity);
+            if (subgenre) params.append("subgenre", subgenre);
+
+            const url = `/api/recommendations/?${params.toString()}`;
+
+            try {
+              const response = await fetch(url);
+              const data = await response.json();
+
+              resultsContainer.innerHTML = "";
+              tracklistBody.innerHTML = "";
+
+              if (data.error) {
+                errorDiv.textContent = data.error;
+                tracklistSection.style.display = "none";
+                hideLoader(interval);
+                return;
+              }
+
+              // build vinyl cards
+              data.forEach((track, i) => {
+                const card = document.createElement("div");
+                card.classList.add("rec-card1", "zoom");
+                card.innerHTML = `
+                  <div class="rec-image1" style="background-image: url('${track.album_cover || "{% static 'assets/static.jpg' %}"}');">
+                    ${
+                      track.preview
+                        ? `<audio class="deezer-audio1" src="${track.preview}"></audio>
+                          <i class="fa-solid fa-circle-play custom-play-button"
+                              track-name="${track.name}"
+                              track-artist="${track.artist}"></i>`
+                        : `<p>No preview available.</p>`
+                    }
+                  </div>
+
+                `;
+                resultsContainer.appendChild(card);
+
+                // build tracklist
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                  <td>${String(i+1).padStart(2, '0')}</td>
+                  <td>${track.name}</td>
+                  <td>${track.artist}</td>
+                  <td>${track.explanation || "N/A"}</td>
+                  <td>
+                    ${(track.match_score || track.similarity_score) 
+                        ? ((track.match_score || track.similarity_score) * 100).toFixed(1) + "%" 
+                        : "N/A"}
+                  </td>
+                `;
+                tracklistBody.appendChild(row);
+              });
+
+              // hide search when vinyl is shown
+              searchResultsContainer.style.display = "none";
+
+              // show tracklist
+              // conditional reccs display only after population
+              recsDisplay.style.display = "block";
+              tracklistLength.textContent = `${data.length} tracks`;
+              tracklistSection.style.display = "block";
+
+              //buttons
+              const playButtons = document.querySelectorAll('.custom-play-button');
+              const audioElements = document.querySelectorAll('.deezer-audio1');
+
+              playButtons.forEach((button, index) => {
+                const audio = audioElements[index];
+                const zoom = button.closest('.zoom');
+
+                button.addEventListener('click', () => {
+                  audioElements.forEach((a, i) => {
+                    if (i !== index) {
+                      a.pause();
+                      playButtons[i].classList.remove('fa-circle-pause');
+                      playButtons[i].classList.add('fa-circle-play');
+                      playButtons[i].closest('.zoom')?.classList.remove('spinning');
+                    }
+                  });
+
+                  if (audio.paused) {
+                    audio.play();
+                    button.classList.remove('fa-circle-play');
+                    button.classList.add('fa-circle-pause');
+                    zoom.classList.add('spinning');
+
+                    const title = button.getAttribute('track-name') || 'Unknown Title';
+                    const artist = button.getAttribute('track-artist') || 'Unknown Artist';
+                    startTypewriter(dots);
+                    setTimeout(() => {
+                      //startTypewriter(`${title} by <span>${artist}`);
+                      startTypewriter(`${title} by ${artist}`);
+
+                    }, dots.length * speed + 500);
+
+                  } else {
+                    audio.pause();
+                    button.classList.remove('fa-circle-pause');
+                    button.classList.add('fa-circle-play');
+                    zoom.classList.remove('spinning');
+                    nowPlayingText.textContent = '';
+                    clearTimeout(typingTimeout);
+                  }
+                });
+
+                audio.addEventListener('ended', () => {
+                  button.classList.remove('fa-circle-pause');
+                  button.classList.add('fa-circle-play');
+                  zoom.classList.remove('spinning');
+                  nowPlayingText.textContent = '';
+                  clearTimeout(typingTimeout);
+                });
+              });
+
+            } catch (err) {
+              console.error(err);
+              resultsContainer.innerHTML = "<p style='color:red;'>Error loading recommendations.</p>";
+              tracklistSection.style.display = "none";
+              recsDisplay.style.display = "none";
+            } finally {
+              // hide loader
+              hideLoader(interval);
+            }
+          });
+        });
+    </script>
+
+
+    <!-- loader -->
+    <div id="loading-overlay" style="display:none;">
+      <div class="loading-box">
+        <div class="progress-bar">
+          <div class="progress-fill"></div>
+        </div>
+        <p id="loading-message">Getting your tracks ready...</p>
+      </div>
+    </div>
+
+
+
+  </body>
+</html>
+

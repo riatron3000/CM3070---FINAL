@@ -1,0 +1,336 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Music recommender site">
+    <meta name="keywords" content="HTML,music,recommendations">
+    <meta name="author" content="M.Khalif">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Doto:wght,ROND@100..900,0..100&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+    <link href='https://fonts.googleapis.com/css?family=Inter' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Doto:wght,ROND@100..900,0..100&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cutive+Mono&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/8d8a85ab1c.js" crossorigin="anonymous"></script>
+    <!-- <link rel="stylesheet" type="text/css" href="{% static 'css/helloworld.css' %}"> -->
+    <link rel="stylesheet" type="text/css" href="{% static 'css/helloworld.css' %}?v={{ timestamp }}">
+
+  </head>
+  <body>
+    
+    <div class="header-nav">
+        <h1>ALGORHYTHM</h1>
+    </div>
+        
+<!-- 
+    <div class="selected-track-info">
+        <div class="bg-img-div">
+            <div class="circle" style="background-image: url('{{ track_data.album_cover }}');">
+            </div>
+        </div>
+        <div class="card scrollable">
+            <h3>{{ track_data.title }}</h3>
+            <p>{{ track_data.artist }}</p>
+            <p>{{ year }}</p>
+        </div>
+        <div class="card no-border scrollable">
+            <h3>{{ track_data.artist }}</h3>
+            {% for artist in sim_artists %}
+                <p>{{ artist }}</p>
+            {% endfor %} 
+            <div class="sel-artist-tags">
+                {% for tag in artist_data.tags %}
+                    <p>{{ tag }}</p>
+                {% endfor %}
+            </div> 
+        </div>
+    </div> -->
+
+    <div class="results-container1">
+        <div class="result1">
+            <div class="res-col">
+                <div class="result-img1">
+                    <img src="{{ track_data.album_cover }}" style="width: 100%;">
+                </div>
+                <div class="result-details1"> 
+                    <!-- <a href="{% url 'select_track_view' %}?track_id={{ track.track_id }}"> -->
+                        <h4>{{ track_data.title }}</h4>
+                        <p>{{ track_data.artist }}</p> 
+                        <p>{{ year }}</p>
+                    <!-- </a> -->
+                </div>
+            </div>
+            <div class="result-rel-artists-and-tags1">
+                <h4>Related Artists</h4>
+                <div class="tags-rel-div">
+                    {% for artist in sim_artists %}
+                        <p>{{ artist }}</p>
+                    {% endfor %}
+                    <div class="result-artist-tags">
+                    {% for tag in artist_data.tags %}
+                        <p>{{ tag }}</p>
+                    {% endfor %}
+                    </div>
+                </div>
+                <!-- {% for artist in sim_artists %}
+                    <p>{{ artist }}</p>
+                {% endfor %}
+                {% for tag in artist_data.tags %}
+                    <p>{{ tag }}</p>
+                {% endfor %} -->
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="recs-display">
+        <div class="container">
+            <div class="vinyl-cover scrollable">
+                {% if final_reccs %}
+                    {% for recc in final_reccs %}
+                        <div class="rec-card1 zoom">
+                            {% if recc.album_cover %}
+                             <div class="rec-image1" style="background-image: url('{{ recc.album_cover}}')" >
+                            {% else %}
+                             <div class="rec-image1" style="background-image: url('{% static 'assets/static.jpg' %}')" >
+                            {% endif %}
+
+                                {% if recc.album_art.preview %}
+                                    <audio class="deezer-audio1" src="{{ recc.album_art.preview }}"></audio>
+                                    <i class="fa-solid fa-circle-play custom-play-button"
+                                       track-name="{{ recc.name }}"
+                                       track-artist="{{ recc.artist }}">
+                                    </i>
+                                {% elif recc.preview %}
+                                    <audio class="deezer-audio1" src="{{ recc.preview }}"></audio>
+                                    <i class="fa-solid fa-circle-play custom-play-button"
+                                       track-name="{{ recc.name }}"
+                                       track-artist="{{ recc.artist }}">
+                                    </i>
+                                {% else %}
+                                    <p>No preview available.</p>
+                                {% endif %}
+                            </div>
+                            <div class="rec-data1">
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="vinyl-cd">
+                <img src="{% static 'assets/vinyl.png' %}" style="width: 100%;"> 
+            </div>
+        </div>
+        <div class="typewriter">
+            <h2 id="now-playing-header">Now Playing:</h2>
+            <p id="now-playing-text"></p>
+        </div>
+    </div>
+<!-- 
+    <div class="tracklisting">
+        <h2>Tracklist</h2>
+        <div class="vinyl-tracks">
+            {% for track in final_reccs %}
+                <p>{{ track.name }} - {{ track.artist }} {{ track.explanation }}</p>
+                
+            {% endfor %}
+        </div>
+
+    </div> -->
+
+    <div class="tracklisting">
+        <div class="tlist-heading">
+            <h2>Tracklist</h2>
+            <i class="fa-regular fa-music"><p class="tracklist-length">{{ final_reccs|length }} tracks</p></i>
+        </div>
+        <div class="vinyl-tracks">
+            <table class="rec-table">
+                <thead>
+                    <tr>
+                        <th>#</th> 
+                        <th>Track</th>
+                        <th>Artist</th>
+                        <th>Match</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for track in final_reccs %}
+                    <tr>
+                        <td>{{ forloop.counter|stringformat:"02d" }}</td>
+                        <td>{{ track.name }}</td>
+                        <td>{{ track.artist }}</td>
+                        <td>{{ track.explanation }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+
+
+
+    <!-- <div class="recommendations-grid">
+        {% if final_reccs %}
+            {% for recc in final_reccs %}
+                <div class="rec-card">
+                    <div class="rec-image" style="background-image: url('{{ recc.album_art.album_cover }}')" >
+                        {% if recc.album_art.preview %}
+                            <audio class="deezer-audio" src="{{ recc.album_art.preview }}"></audio>
+                            <i class="fa-solid fa-circle-play custom-play-button"></i>
+                        {% else %}
+                            <p>No preview available.</p>
+                        {% endif %}
+                    </div>
+                    <div class="rec-data">
+                        <p class="rec-song-name">{{ recc.name }}</p>
+                        <p class="rec-artist-name">{{ recc.artist }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div> -->
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Select all preview buttons and audio elements
+            const playButtons = document.querySelectorAll('.custom-play-button');
+            const audioElements = document.querySelectorAll('.deezer-audio1');
+            const nowPlayingText = document.querySelector('.typewriter p');
+            //const nowPlayingHeader = document.querySelector('.typewriter h2');
+
+            ///////// https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_typewriter /////////////////////
+            let typingTimeout;      // reference to current typing timer
+            let typingIndex = 0;    // current character index
+            let fullText = '';      // the text to type
+            const speed = 85; // typing delay in ms
+            let dots = ".................";
+
+
+            function typeWriter() {
+                if (typingIndex < fullText.length) {
+                    nowPlayingText.textContent += fullText.charAt(typingIndex);
+                    typingIndex++;
+                    typingTimeout = setTimeout(typeWriter, speed);
+                }
+            }
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            function startTypewriter(text) {
+                clearTimeout(typingTimeout);
+                fullText = text;
+                typingIndex = 0;
+                nowPlayingText.textContent = '';
+                typeWriter();
+            }
+
+            playButtons.forEach((button, index) => {
+            const audio = audioElements[index];
+            const zoom = button.closest('.zoom'); // added code
+
+            button.addEventListener('click', () => {
+                // Pause all other audio elements
+                audioElements.forEach((a, i) => {
+                if (i !== index) {
+                    a.pause();
+                    playButtons[i].classList.remove('fa-circle-pause');
+                    playButtons[i].classList.add('fa-circle-play');
+                    const otherZoom = playButtons[i].closest('.zoom');
+                    if (otherZoom) {
+                        otherZoom.classList.remove('spinning');
+                    }
+                }
+            });
+
+                if (audio.paused) {
+                    audio.play();
+                    button.classList.remove('fa-circle-play');
+                    button.classList.add('fa-circle-pause');
+                    zoom.classList.add('spinning');
+
+                    // 🎵 Update now playing text
+                    const title = button.getAttribute('track-name') || 'Unknown Title';
+                    const artist = button.getAttribute('track-artist') || 'Unknown Artist';
+                    //nowPlayingText.textContent = `${title} — ${artist}`;
+
+                    //nowPlayingHeader.style.display = 'block';
+                    startTypewriter(dots);
+
+                    setTimeout(() => {
+                        startTypewriter(`${title} by ${artist}`);
+                    }, dots.length * speed + 500);
+
+                } else {
+                    audio.pause();
+                    button.classList.remove('fa-circle-pause');
+                    button.classList.add('fa-circle-play');
+                    //zoom.classList.remove('spinning');
+                    if (zoom) zoom.classList.remove('spinning');
+                    //nowPlayingHeader.style.display = 'none';
+                    nowPlayingText.textContent = '';
+                    clearTimeout(typingTimeout);
+                }
+            });
+
+            audio.addEventListener('ended', () => {
+                button.classList.remove('fa-circle-pause');
+                button.classList.add('fa-circle-play');
+                //zoom.classList.remove('spinning');
+                if (zoom) zoom.classList.remove('spinning');
+                //nowPlayingHeader.style.display = 'none';
+                nowPlayingText.textContent = '';
+                clearTimeout(typingTimeout);
+            });
+        });
+        
+    });
+
+    </script>
+
+
+
+
+    <!-- {% if preview_url %}
+  <h3>{{ track_title }} by {{ artist_name }}</h3>
+  <audio controls>
+    <source src="{{ preview_url }}" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+{% else %}
+  <p>No preview available.</p>
+{% endif %} -->
+
+
+
+
+
+
+
+
+
+  </body>
+</html>
+
+
+
+<!-- 
+    {'track_id': 1280158382, 
+    'title': 'Tulsa Jesus Freak', 
+    'track_release': '2021-03-19', 
+    'artist': 'Lana Del Rey', 
+    'preview': 'https://cdnt-preview.dzcdn.net/api/1/1/2/0/e/0/20e99e43750682f804e1dd3335a44e69.mp3?hdnea=exp=1747084820~acl=/api/1/1/2/0/e/0/20e99e43750682f804e1dd3335a44e69.mp3*~data=user_id=0,application_id=42~hmac=2c763e90125f7a53977c83cbabad2fcbef74f8c2f94448ef99ecc78766221dd9', 'link': 'https://www.deezer.com/track/1280158382', 
+    'album': 'Chemtrails Over The Country Club', 
+    'album_cover': 'https://cdn-images.dzcdn.net/images/cover/bfcc4fdda18be0e2f6fecc3aeebebe6c/500x500-000000-80-0-0.jpg', 
+    'bpm': 0, 
+    'gain': -13} -->

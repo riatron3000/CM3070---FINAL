@@ -1,0 +1,41 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Music recommender site">
+    <meta name="keywords" content="HTML,music,recommendations">
+    <meta name="author" content="M.Khalif">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Doto:wght,ROND@100..900,0..100&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/8d8a85ab1c.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/helloworld.css' %}?v={{ timestamp }}">
+  </head>
+  <body>
+
+    <div class="title-section">
+        <h1>ALGORHYTHM</h1>
+    </div>
+
+    <div class="fp-landing">
+      <h1>Curated by rhythm, discovered by you.</h1>
+      <p>Give us your favorite track and we’ll give you a playlist with similar songs that you’ll love.</p>
+      <div class="search-section">
+        <form method="get" action="{% url 'search_deezer_tracks' %}" class="search-song-form">
+            <input type="text" name="query" class="search-input" placeholder="Enter up to 3 tracks, comma separated" required>
+            <button type="submit" class="search-button">Search</button>
+        </form>
+      </div>
+    </div>
+
+  </body>
+</html>
+

@@ -10,7 +10,7 @@ The `data/` folder contains large files required for running the app (models, em
 These files are **not included in the GitHub repository** due to their size.
 
 You can download all required files from Google Drive:  
-[Data Files]((https://drive.google.com/drive/folders/1khUtVbyatmDqDkF9PCeWgyWded5AoJbp?usp=share_link))
+https://drive.google.com/drive/folders/1khUtVbyatmDqDkF9PCeWgyWded5AoJbp?usp=share_link
 
 After downloading, place the files in your local `project/data/` folder so the system works correctly.
 

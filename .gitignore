@@ -3,3 +3,7 @@ fpenv/
 project/data/fasttext_tag_model2_final.model.wv.vectors_ngrams.npy
 fpenv/
 project/data/fasttext_tag_model2_final.model.wv.vectors_ngrams.npy
+project/data/track_matrix_final2.npy
+project/data/final_df.csv
+project/data/final_df.csv
+project/data/fasttext_tag_model2_final.model
